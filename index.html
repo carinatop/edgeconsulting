@@ -2378,6 +2378,7 @@ $("saveModal").onclick=async()=>{
     }
   }
   else if(modalType==="hours"){table="time_entries";payload={work_date:$("mDate").value,project:$("mProject").value.trim()||"General",task_title:$("mTask").value.trim()||null,hours:Number($("mHours").value||0),billable:$("mBillable").value==="true",hourly_rate:$("mRate").value?Number($("mRate").value):null,notes:$("mNotes").value.trim()||null}}
+  else if(modalType==="deliverable"){table="deliverables";payload={title:$("mTitle").value.trim(),project:$("mProject").value.trim(),description:$("mDescription").value.trim()}}
   else if(modalType==="invoice"){table="invoices";payload={invoice_number:$("mInvNo").value.trim()||null,client:$("mClient").value.trim()||"The Edge Consulting",period_start:$("mStart").value||null,period_end:$("mEnd").value||null,amount:Number($("mAmount").value||0),currency:$("mCurrency").value,status:$("mStatus").value,issued_date:$("mIssued").value||null,due_date:$("mDue").value||null,paid_date:$("mPaid").value||null,notes:$("mNotes").value.trim()||null}}
   if(!payload.title && ["tasks","resources","processes","meeting_notes","content_items"].includes(table))return alert("Add a title.");
   payload.user_id=user.id;
@@ -2763,12 +2764,13 @@ function renderDeliverables(){
  box.innerHTML=rows.map(x=>`
  <div class="card" style="padding:16px">
   <div style="font-weight:800">📄 ${esc(x.title||"Untitled")}</div>
-  <div style="font-size:11px;color:var(--muted);margin-top:5px">${esc(x.file_type||"File")} ${x.project?"· "+esc(x.project):""}</div>
-  ${x.description?`<div style="margin-top:10px">${esc(x.description)}</div>`:""}
-  <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-   ${x.file_url?`<button class="secondary" onclick="window.open('${x.file_url}','_blank')">Open</button><button class="secondary" onclick="openDeliverablePreview('${x.id}')">Preview</button>`:""}
+  <div style="font-size:11px;color:var(--muted);margin-top:6px">${esc(x.file_name||"File")} ${x.project?"· "+esc(x.project):""}</div>
+  ${x.description?`<div style="margin-top:10px;font-size:12px">${esc(x.description)}</div>`:""}
+  <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+   <button class="secondary" onclick="window.open('${attr(x.file_url||"")}', '_blank')">Open</button>
+   <button class="secondary" onclick="openDeliverablePreview('${x.id}')">Preview</button>
    <button class="secondary" onclick="editDeliverable('${x.id}')">Edit</button>
-   <button class="danger" onclick="deleteDeliverable('${x.id}','${x.storage_path||""}')">Delete</button>
+   <button class="danger" onclick="deleteDeliverable('${x.id}','${attr(x.storage_path||"")}')">Delete</button>
   </div>
  </div>`).join("")||"<div class='emptyState'>No deliverables yet.</div>";
 }
@@ -2776,11 +2778,8 @@ function renderDeliverables(){
 function openDeliverablePreview(id){
  const file=deliverables.find(x=>x.id===id);
  if(!file)return;
- const modal=document.createElement("div");
- modal.className="modal";
- modal.style.display="flex";
- modal.innerHTML=`<div class="modalCard" style="max-width:900px;width:90%"><h2>${esc(file.title)}</h2>${previewDeliverable(file)}<button class="secondary" onclick="this.closest('.modal').remove()">Close</button></div>`;
- document.body.appendChild(modal);
+ const w=window.open("","_blank");
+ w.document.write(previewDeliverable(file));
 }
 
 function editDeliverable(id){
@@ -2790,7 +2789,6 @@ function editDeliverable(id){
  modalType="deliverable";
  openModal("Edit Deliverable",`<label>Title</label><input id="mTitle" value="${esc(file.title||"")}"><label>Project</label><input id="mProject" value="${esc(file.project||"")}"><label>Description</label><textarea id="mDescription">${esc(file.description||"")}</textarea>`);
 }
-
 $("deliverableSearch")?.addEventListener("input",renderDeliverables);
 $("addDeliverable")?.addEventListener("click",()=>
 openDeliverableUploadForm()
